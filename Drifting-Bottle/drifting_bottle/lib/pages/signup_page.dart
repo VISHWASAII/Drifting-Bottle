@@ -1,23 +1,16 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
+import 'login_page.dart' show kBaseUrl;
 
-// ─── Global constant ───────────────────────────────────────────────────────────
-const String kBaseUrl = 'http://localhost:8080';      // Windows desktop / Chrome
-// const String kBaseUrl = 'http://10.0.2.2:8080';   // Android emulator
-// const String kBaseUrl = 'http://192.168.x.x:8080'; // Physical device (use your machine's local IP)
-
-// ─── Convert StatelessWidget → StatefulWidget ──────────────────────────────────
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class SignUpScreen extends StatefulWidget {
+  const SignUpScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<SignUpScreen> createState() => _SignUpScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
-  // Controllers
+class _SignUpScreenState extends State<SignUpScreen> {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
@@ -31,41 +24,31 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  // ─── Login API call ────────────────────────────────────────────────────────
-  Future<void> _login() async {
+  // ─── Sign Up API call ──────────────────────────────────────────────────────
+  Future<void> _signUp() async {
     setState(() { _isLoading = true; _errorMessage = null; });
 
-    final url = Uri.parse('$kBaseUrl/api/login/authenticate');
+    final url = Uri.parse('$kBaseUrl/api/login/Mock-insertion');
 
     try {
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'name': _usernameController.text.trim(),
-          'password': _passwordController.text,
-        }),
+        body: jsonEncode([
+          {
+            'name': _usernameController.text.trim(),
+            'password': _passwordController.text,
+          }
+        ]),
       );
 
-      if (response.statusCode == 200) {
-        // Parse the returned user JSON
-        final Map<String, dynamic> userData = jsonDecode(response.body);
-
-        // ─── Save to SharedPreferences (like localStorage) ───
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('username', userData['username'] ?? '');
-        await prefs.setString('email', userData['email'] ?? '');  // add fields your User has
-        await prefs.setInt('userId', userData['id'] ?? 0);
-        await prefs.setBool('isLoggedIn', true);
-
-        if (mounted) Navigator.of(context).pushNamed('/Capture');
-
+      if (response.statusCode == 201) {
+        if (mounted) Navigator.of(context).pushReplacementNamed('/');
       } else {
-        setState(() { _errorMessage = 'Invalid credentials. Please try again.'; });
+        setState(() { _errorMessage = 'Sign up failed. Please try again.'; });
       }
     } catch (e) {
-      print('ERROR: $e');  // ← add this
-      setState(() { _errorMessage = 'Network error: $e'; }); // show full error on screen
+      setState(() { _errorMessage = 'Network error: $e'; });
     } finally {
       setState(() { _isLoading = false; });
     }
@@ -222,11 +205,11 @@ class _LoginScreenState extends State<LoginScreen> {
                       borderRadius: BorderRadius.circular(28),
                     ),
                     child: TextField(
-                      controller: _usernameController, // ← wired
+                      controller: _usernameController,
                       decoration: const InputDecoration(
                         border: InputBorder.none,
                         contentPadding:
-                        EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                            EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                       ),
                       style: const TextStyle(
                         color: Color(0xFF2C3E50),
@@ -257,12 +240,12 @@ class _LoginScreenState extends State<LoginScreen> {
                       borderRadius: BorderRadius.circular(28),
                     ),
                     child: TextField(
-                      controller: _passwordController, // ← wired
+                      controller: _passwordController,
                       obscureText: true,
                       decoration: const InputDecoration(
                         border: InputBorder.none,
                         contentPadding:
-                        EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                            EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                       ),
                       style: const TextStyle(
                         color: Color(0xFF2C3E50),
@@ -288,12 +271,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   const SizedBox(height: 8),
 
-                  // Login button
+                  // Sign Up button
                   SizedBox(
                     width: 130,
                     height: 46,
                     child: ElevatedButton(
-                      onPressed: _isLoading ? null : _login, // ← calls _login
+                      onPressed: _isLoading ? null : _signUp,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF5E8A82),
                         foregroundColor: Colors.white,
@@ -304,37 +287,21 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       child: _isLoading
                           ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2,
-                        ),
-                      )
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
                           : const Text(
-                        'Login',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  // Sign Up link
-                  GestureDetector(
-                    onTap: () => Navigator.of(context).pushNamed('/SignUp'),
-                    child: const Text(
-                      "Don't have an account? Sign Up",
-                      style: TextStyle(
-                        color: Color(0xFF7DC9D8),
-                        fontSize: 14,
-                        decoration: TextDecoration.underline,
-                        decorationColor: Color(0xFF7DC9D8),
-                      ),
+                              'Sign Up',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
                     ),
                   ),
                 ],

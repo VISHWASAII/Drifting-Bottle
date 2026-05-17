@@ -3,6 +3,7 @@ import 'package:drifting_bottle/pages/bottle_history.dart';
 import 'package:drifting_bottle/pages/bottle_writes.dart';
 import 'package:flutter/material.dart';
 import 'package:drifting_bottle/pages/login_page.dart';
+import 'package:drifting_bottle/pages/signup_page.dart';
 
 void main() {
   runApp(MyApp());
@@ -18,7 +19,8 @@ class MyApp extends StatelessWidget {
         '/' : (context) => LoginScreen(),
         '/Throw': (context) => ThrowScreen(),
         '/Capture': (context) => DriftedMessageScreen(),
-        '/History' : (context) => YourBottlesScreen()
+        '/History' : (context) => YourBottlesScreen(),
+        '/SignUp'  : (context) => SignUpScreen(),
       },
     );
   }
