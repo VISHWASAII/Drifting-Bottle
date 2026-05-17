@@ -1,0 +1,85 @@
+# User data's
+
+[
+  {
+    "name": "Alice",
+    "password": "alice123"
+  },
+  {
+    "name": "Bob",
+    "password": "bob123"
+  },
+  {
+    "name": "Charlie",
+    "password": "charlie123"
+  },
+  {
+    "name": "David",
+    "password": "david123"
+  },
+  {
+    "name": "Emma",
+    "password": "emma123"
+  },
+  {
+    "name": "Frank",
+    "password": "frank123"
+  },
+  {
+    "name": "Grace",
+    "password": "grace123"
+  },
+  {
+    "name": "Henry",
+    "password": "henry123"
+  },
+  {
+    "name": "Isabella",
+    "password": "isabella123"
+  },
+  {
+    "name": "Jack",
+    "password": "jack123"
+  },
+  {
+    "name": "Kevin",
+    "password": "kevin123"
+  }
+]
+
+# Order of storing
+
+1  -> Alice
+2  -> Bob
+3  -> Charlie
+4  -> David
+5  -> Emma
+6  -> Frank
+7  -> Grace
+8  -> Henry
+9  -> Isabella
+10 -> Jack
+11 -> Kevin
+
+# Mocking values
+
+User 1 Sends
+{
+  "senderId": 1,
+  "message": "Hello from Alice"
+}
+User 2 Sends
+{
+  "senderId": 2,
+  "message": "Hello from Bob"
+}
+User 3 Sends
+{
+  "senderId": 3,
+  "message": "Hello from Charlie"
+}
+Continue Until 11
+{
+  "senderId": 11,
+  "message": "Hello from Kevin"
+}

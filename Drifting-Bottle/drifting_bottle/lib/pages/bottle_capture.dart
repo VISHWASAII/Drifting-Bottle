@@ -1,8 +1,68 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
-class DriftedMessageScreen extends StatelessWidget {
+
+const String kBaseUrl = 'http://10.0.2.2:8080';
+
+class DriftedMessageScreen extends StatefulWidget {
   const DriftedMessageScreen({super.key});
+
+  @override
+  State<DriftedMessageScreen> createState() => _DriftedMessageScreenState();
+}
+
+class _DriftedMessageScreenState extends State<DriftedMessageScreen> {
+  String _message = '';
+  bool _isLoading = true;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchMessage();
+  }
+
+  // ─── Fetch message using stored userId ──────────────────────────────────────
+  Future<void> _fetchMessage() async {
+    setState(() { _isLoading = true; _errorMessage = null; });
+
+    try {
+      // 1. Read userId saved during login
+      final prefs = await SharedPreferences.getInstance();
+      final int? userId = prefs.getInt('userId');
+
+      if (userId == null) {
+        setState(() {
+          _errorMessage = 'User not logged in.';
+          _isLoading = false;
+        });
+        return;
+      }
+
+      // 2. Call the API with receiverId
+      final url = Uri.parse('$kBaseUrl/api/bottle/receiver/$userId');
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        setState(() {
+          _message = response.body; // plain string returned by server
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _errorMessage = 'No message found.';
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Network error. Check your connection.';
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,11 +84,9 @@ class DriftedMessageScreen extends StatelessWidget {
             ),
           ),
 
-          // Bottom wave layer 1 — back (with contour lines)
+          // Bottom wave layer 1 — back
           Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
+            bottom: 0, left: 0, right: 0,
             child: ClipPath(
               clipper: _WaveClipper(heightFactor: 0.42, waveOffset: 0.0),
               child: CustomPaint(
@@ -43,9 +101,7 @@ class DriftedMessageScreen extends StatelessWidget {
 
           // Bottom wave layer 2 — middle
           Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
+            bottom: 0, left: 0, right: 0,
             child: ClipPath(
               clipper: _WaveClipper(heightFactor: 0.30, waveOffset: 0.3),
               child: CustomPaint(
@@ -60,9 +116,7 @@ class DriftedMessageScreen extends StatelessWidget {
 
           // Bottom wave layer 3 — front
           Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
+            bottom: 0, left: 0, right: 0,
             child: ClipPath(
               clipper: _WaveClipper(heightFactor: 0.20, waveOffset: 0.6),
               child: CustomPaint(
@@ -75,11 +129,9 @@ class DriftedMessageScreen extends StatelessWidget {
             ),
           ),
 
-          // Bottle icon floating on waves
+          // Bottle icon
           Positioned(
-            bottom: 65,
-            left: 0,
-            right: 50,
+            bottom: 65, left: 0, right: 50,
             child: Center(
               child: Transform.rotate(
                 angle: -0.25,
@@ -101,7 +153,7 @@ class DriftedMessageScreen extends StatelessWidget {
                 children: [
                   const SizedBox(height: 16),
 
-                  // Top buttons: Write | Bottles
+                  // Top buttons
                   Row(
                     children: [
                       _TopButton(label: 'Write', onTap: () {
@@ -116,9 +168,8 @@ class DriftedMessageScreen extends StatelessWidget {
 
                   const SizedBox(height: 60),
 
-                  // Subtitle
                   const Text(
-                    'A message  drifted to you !',
+                    'A message drifted to you !',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 15,
@@ -129,7 +180,7 @@ class DriftedMessageScreen extends StatelessWidget {
 
                   const SizedBox(height: 10),
 
-                  // Message card (read-only parchment)
+                  // ─── Message card ──────────────────────────────────────────
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(
@@ -138,9 +189,23 @@ class DriftedMessageScreen extends StatelessWidget {
                       color: const Color(0xFFF5EDD6),
                       borderRadius: BorderRadius.circular(14),
                     ),
-                    child: const Text(
-                      'Dont Buy Gold',
-                      style: TextStyle(
+                    child: _isLoading
+                        ? const Center(
+                      child: CircularProgressIndicator(
+                        color: Color(0xFF5E8A82),
+                      ),
+                    )
+                        : _errorMessage != null
+                        ? Text(
+                      _errorMessage!,
+                      style: const TextStyle(
+                        color: Colors.red,
+                        fontSize: 15,
+                      ),
+                    )
+                        : Text(
+                      _message, // ← dynamic message from API
+                      style: const TextStyle(
                         color: Color(0xFF1A1A1A),
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
@@ -150,22 +215,19 @@ class DriftedMessageScreen extends StatelessWidget {
 
                   const SizedBox(height: 18),
 
-                  // Like count | Bottle count | Connect button
+                  // Like | Bottle count | Connect
                   Row(
                     children: [
-                      const Icon(Icons.favorite,
-                          color: Colors.white, size: 22),
+                      const Icon(Icons.favorite, color: Colors.white, size: 22),
                       const SizedBox(width: 6),
                       const Text('20',
-                          style: TextStyle(
-                              color: Colors.white, fontSize: 15)),
+                          style: TextStyle(color: Colors.white, fontSize: 15)),
                       const SizedBox(width: 18),
                       const Icon(Icons.wine_bar,
                           color: Color(0xFFD4A96A), size: 22),
                       const SizedBox(width: 6),
                       const Text('15',
-                          style: TextStyle(
-                              color: Colors.white, fontSize: 15)),
+                          style: TextStyle(color: Colors.white, fontSize: 15)),
                       const Spacer(),
                       SizedBox(
                         height: 42,
@@ -175,8 +237,7 @@ class DriftedMessageScreen extends StatelessWidget {
                             backgroundColor: const Color(0xFFFFCC00),
                             foregroundColor: Colors.black,
                             elevation: 0,
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 28),
+                            padding: const EdgeInsets.symmetric(horizontal: 28),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(22),
                             ),
@@ -195,13 +256,13 @@ class DriftedMessageScreen extends StatelessWidget {
 
                   const SizedBox(height: 48),
 
-                  // Throw again button
+                  // Throw again — also re-fetches a new message
                   Center(
                     child: SizedBox(
                       width: 200,
                       height: 48,
                       child: ElevatedButton(
-                        onPressed: () {},
+                        onPressed: _fetchMessage, // ← re-fetches on tap
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF5E8A82),
                           foregroundColor: Colors.white,
@@ -231,7 +292,7 @@ class DriftedMessageScreen extends StatelessWidget {
   }
 }
 
-// ─── Reusable top pill button ────────────────────────────────────────────────
+// ─── Reusable top pill button ─────────────────────────────────────────────────
 
 class _TopButton extends StatelessWidget {
   final String label;
@@ -274,7 +335,6 @@ class _WaveClipper extends CustomClipper<Path> {
   Path getClip(Size size) {
     final path = Path();
     final waveTop = size.height * heightFactor;
-
     path.moveTo(0, waveTop);
     path.cubicTo(
       size.width * (0.25 + waveOffset * 0.1), waveTop - 40,
@@ -292,26 +352,21 @@ class _WaveClipper extends CustomClipper<Path> {
       old.heightFactor != heightFactor || old.waveOffset != waveOffset;
 }
 
-// ─── Contour / topographic wave painter ──────────────────────────────────────
+// ─── Contour wave painter ─────────────────────────────────────────────────────
 
 class _ContourWavePainter extends CustomPainter {
   final Color baseColor;
   final Color lineColor;
 
-  const _ContourWavePainter({
-    required this.baseColor,
-    required this.lineColor,
-  });
+  const _ContourWavePainter({required this.baseColor, required this.lineColor});
 
   @override
   void paint(Canvas canvas, Size size) {
-    // Base fill
     canvas.drawRect(
       Rect.fromLTWH(0, 0, size.width, size.height),
       Paint()..color = baseColor,
     );
 
-    // Contour lines
     final linePaint = Paint()
       ..color = lineColor
       ..strokeWidth = 1.2
@@ -333,7 +388,6 @@ class _ContourWavePainter extends CustomPainter {
           path.lineTo(x, y);
         }
       }
-
       canvas.drawPath(path, linePaint);
     }
   }

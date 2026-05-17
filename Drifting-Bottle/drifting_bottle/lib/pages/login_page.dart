@@ -1,8 +1,77 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
-class LoginScreen extends StatelessWidget {
+// ─── Global constant ───────────────────────────────────────────────────────────
+const String kBaseUrl = 'http://10.0.2.2:8080'; // Android emulator
+// const String kBaseUrl = 'http://localhost:8080';   // iOS simulator
+// const String kBaseUrl = 'http://192.168.x.x:8080'; // Physical device (use your machine's local IP)
+
+// ─── Convert StatelessWidget → StatefulWidget ──────────────────────────────────
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  // Controllers
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
+  bool _isLoading = false;
+  String? _errorMessage;
+
+  @override
+  void dispose() {
+    _usernameController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  // ─── Login API call ────────────────────────────────────────────────────────
+  Future<void> _login() async {
+    setState(() { _isLoading = true; _errorMessage = null; });
+
+    final url = Uri.parse('$kBaseUrl/api/login/authenticate');
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'name': _usernameController.text.trim(),
+          'password': _passwordController.text,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        // Parse the returned user JSON
+        final Map<String, dynamic> userData = jsonDecode(response.body);
+
+        // ─── Save to SharedPreferences (like localStorage) ───
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('username', userData['username'] ?? '');
+        await prefs.setString('email', userData['email'] ?? '');  // add fields your User has
+        await prefs.setInt('userId', userData['id'] ?? 0);
+        await prefs.setBool('isLoggedIn', true);
+
+        if (mounted) Navigator.of(context).pushNamed('/Capture');
+
+      } else {
+        setState(() { _errorMessage = 'Invalid credentials. Please try again.'; });
+      }
+    } catch (e) {
+      print('ERROR: $e');  // ← add this
+      setState(() { _errorMessage = 'Network error: $e'; }); // show full error on screen
+    } finally {
+      setState(() { _isLoading = false; });
+    }
+  }
+
+  // ─── Build ─────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -152,13 +221,14 @@ class LoginScreen extends StatelessWidget {
                       color: const Color(0xFFECF0F1),
                       borderRadius: BorderRadius.circular(28),
                     ),
-                    child: const TextField(
-                      decoration: InputDecoration(
+                    child: TextField(
+                      controller: _usernameController, // ← wired
+                      decoration: const InputDecoration(
                         border: InputBorder.none,
                         contentPadding:
                         EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                       ),
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: Color(0xFF2C3E50),
                         fontSize: 15,
                       ),
@@ -186,30 +256,44 @@ class LoginScreen extends StatelessWidget {
                       color: const Color(0xFFECF0F1),
                       borderRadius: BorderRadius.circular(28),
                     ),
-                    child: const TextField(
+                    child: TextField(
+                      controller: _passwordController, // ← wired
                       obscureText: true,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         border: InputBorder.none,
                         contentPadding:
                         EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                       ),
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: Color(0xFF2C3E50),
                         fontSize: 15,
                       ),
                     ),
                   ),
 
-                  const SizedBox(height: 28),
+                  const SizedBox(height: 10),
+
+                  // Error message
+                  if (_errorMessage != null)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: Text(
+                        _errorMessage!,
+                        style: const TextStyle(
+                          color: Color(0xFFFF6B6B),
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+
+                  const SizedBox(height: 8),
 
                   // Login button
                   SizedBox(
                     width: 130,
                     height: 46,
                     child: ElevatedButton(
-                      onPressed: () {
-                         Navigator.of(context).pushNamed('/Capture');
-                      },
+                      onPressed: _isLoading ? null : _login, // ← calls _login
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF5E8A82),
                         foregroundColor: Colors.white,
@@ -218,7 +302,16 @@ class LoginScreen extends StatelessWidget {
                           borderRadius: BorderRadius.circular(24),
                         ),
                       ),
-                      child: const Text(
+                      child: _isLoading
+                          ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                          : const Text(
                         'Login',
                         style: TextStyle(
                           fontSize: 16,
@@ -277,14 +370,4 @@ class _WaveClipper extends CustomClipper<Path> {
   bool shouldReclip(_WaveClipper oldClipper) =>
       oldClipper.heightFactor != heightFactor ||
           oldClipper.waveOffset != waveOffset;
-}
-
-// Entry point for testing
-void main() {
-  runApp(
-    const MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: LoginScreen(),
-    ),
-  );
 }
