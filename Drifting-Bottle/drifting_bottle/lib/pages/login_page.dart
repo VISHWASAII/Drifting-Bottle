@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 // ─── Global constant ───────────────────────────────────────────────────────────
-const String kBaseUrl = 'http://localhost:8080';      // Windows desktop / Chrome
+const String kBaseUrl = 'http://10.0.2.2:8080';      // Windows desktop / Chrome
 // const String kBaseUrl = 'http://10.0.2.2:8080';   // Android emulator
 // const String kBaseUrl = 'http://192.168.x.x:8080'; // Physical device (use your machine's local IP)
 

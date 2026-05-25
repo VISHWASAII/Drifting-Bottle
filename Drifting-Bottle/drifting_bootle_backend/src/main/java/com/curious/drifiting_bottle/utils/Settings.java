@@ -1,7 +1,7 @@
 package com.curious.drifiting_bottle.utils;
 
+import com.curious.drifiting_bottle.model.Registration;
 import com.curious.drifiting_bottle.repository.AuthenticationRepo;
-import com.curious.drifiting_bottle.model.User;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -24,7 +24,7 @@ public class Settings {
         List<Long> users =
                 authenticationRepo.findAll()
                         .stream()
-                        .map(User::getId)
+                        .map(Registration::getId)
                         .toList();
 
         List<Long> receivers =

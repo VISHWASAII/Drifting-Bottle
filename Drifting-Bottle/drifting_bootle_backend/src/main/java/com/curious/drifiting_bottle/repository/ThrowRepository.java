@@ -8,6 +8,7 @@ import java.util.Optional;
 
 public interface ThrowRepository extends JpaRepository<Throw, Long> {
 
-    Optional<Throw>
-    findByReceiverId(Long receiverId);
+    List<Throw> findAllByReceiverId(Long receiverId);
+
+    boolean existsByReceiverIdAndFlagTrue(Long receiverId);
 }

@@ -33,20 +33,13 @@ public class ThrowController {
     }
 
     @PostMapping("/sendMessage")
-    public ResponseEntity<Throw> throwMessage(Long senderId, String text){
+    public ResponseEntity<Throw> throwMessage(
+            @RequestParam Long senderId,
+            @RequestParam String text
+    ){
         Throw sendToReceive = throwService.sendMessage(senderId, text);
+
         return new ResponseEntity<>(sendToReceive, HttpStatus.ACCEPTED);
     }
 
-    @GetMapping("/Mock-GetAllThrows")
-    public ResponseEntity<List<Throw>> getAllThrows(){
-        List<Throw> allThrows = throwService.getAllThrows();
-        return new ResponseEntity<>(allThrows, HttpStatus.OK);
-    }
-
-    @DeleteMapping("/Mock-DeleteAllThrows")
-    public ResponseEntity<Void> deleteAllThrows(){
-        throwService.deleteAllThrows();
-        return new ResponseEntity<>(HttpStatus.OK);
-    }
 }

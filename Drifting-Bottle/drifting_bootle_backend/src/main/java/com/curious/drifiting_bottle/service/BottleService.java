@@ -5,6 +5,7 @@ import com.curious.drifiting_bottle.repository.ThrowRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Random;
 
 @Service
 public class BottleService {
@@ -15,7 +16,11 @@ public class BottleService {
         this.throwRepository = throwRepository;
     }
 
-    public Throw getThrowMessage(Long receiverId){
-        return throwRepository.findByReceiverId(receiverId).orElse(null);
+    public Throw getThrowMessage(Long receiverId) {
+        List<Throw> messages = throwRepository.findAllByReceiverId(receiverId);
+        if (messages.isEmpty()) return null;
+
+        int randomIndex = new Random().nextInt(messages.size());
+        return messages.get(randomIndex);
     }
 }

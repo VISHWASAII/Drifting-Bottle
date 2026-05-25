@@ -19,21 +19,22 @@ public class ThrowService {
     }
 
     public Throw sendMessage(Long senderId, String text){
-        Long receiverId =settings.getRandomReceiver(senderId);
+
+        Long receiverId;
+
+        do {
+            receiverId = settings.getRandomReceiver(senderId);
+
+        } while (throwRepository.existsByReceiverIdAndFlagTrue(receiverId));
+
         Throw throwMessage = new Throw();
 
         throwMessage.setSenderId(senderId);
         throwMessage.setReceiverId(receiverId);
         throwMessage.setMessage(text);
+        throwMessage.setFlag(true);
 
         return throwRepository.save(throwMessage);
     }
 
-    public List<Throw> getAllThrows(){
-        return throwRepository.findAll();
-    }
-
-    public void deleteAllThrows(){
-        throwRepository.deleteAll();
-    }
 }

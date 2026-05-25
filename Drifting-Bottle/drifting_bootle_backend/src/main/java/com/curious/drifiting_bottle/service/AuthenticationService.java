@@ -1,46 +1,83 @@
 package com.curious.drifiting_bottle.service;
 
-import com.curious.drifiting_bottle.model.User;
+import com.curious.drifiting_bottle.dto.LoginDTO;
+import com.curious.drifiting_bottle.model.Registration;
+import com.curious.drifiting_bottle.model.TokenPair;
 import com.curious.drifiting_bottle.repository.AuthenticationRepo;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+
+import java.util.Collection;
 import java.util.List;
 
 @Service
-public class AuthenticationService {
+@RequiredArgsConstructor
+public class AuthenticationService implements UserDetailsService {
 
     private final AuthenticationRepo authenticationRepo;
+    private final JwtService jwtService;
+
+    @Lazy
+    @Autowired
+    private  AuthenticationManager authenticationManager;
+
     private static final Logger logger = LoggerFactory.getLogger(AuthenticationService.class);
 
-    public AuthenticationService(AuthenticationRepo authenticationRepo) {
-        this.authenticationRepo = authenticationRepo;
-    }
 
-    public void deleteAllUsers(){
-        logger.info("Successfully Users Deleted from database....");
-        authenticationRepo.deleteAll();
-    }
+    public TokenPair login(LoginDTO user){
 
-    public List<User> insertUsers(List<User> users){
-        authenticationRepo.saveAll(users);
-        logger.info("Users stored Successfully....");
-        return users;
-    }
+        System.out.println("LOGIN START");
 
-    public User authenticateUser(User user) {
-
-        List<User> listOfUsers = authenticationRepo.findAll();
-
-        logger.info("Authenticating user....");
-
-        return listOfUsers.stream()
-                .filter(users ->
-                        users.getName().equals(user.getName()) &&
-                                users.getPassword().equals(user.getPassword())
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        user.getUsername(),
+                        user.getPassword()
                 )
-                .findFirst()
-                .orElse(null);
+        );
+
+        System.out.println("AUTH SUCCESS");
+
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        TokenPair tokenPair = jwtService.generateTokenPair(authentication);
+
+        System.out.println("TOKEN GENERATED");
+
+        return tokenPair;
+    }
+
+
+    public Boolean existsByName(String name) {
+        return null;
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        Registration user = authenticationRepo.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        return new org.springframework.security.core.userdetails.User(
+                user.getUsername(),
+                user.getPassword(),
+                getAuthority(user)
+        );
+    }
+
+    private Collection<? extends GrantedAuthority> getAuthority(Registration user) {
+        GrantedAuthority autority = new SimpleGrantedAuthority(user.getRole().name());
+        return List.of(autority);
     }
 }

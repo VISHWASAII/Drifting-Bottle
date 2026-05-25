@@ -17,4 +17,6 @@ public class Throw {
     private Long receiverId;
 
     private String message;
+
+    private boolean flag;
 }

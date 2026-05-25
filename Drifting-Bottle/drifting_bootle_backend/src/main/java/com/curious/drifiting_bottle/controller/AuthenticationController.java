@@ -1,45 +1,33 @@
 package com.curious.drifiting_bottle.controller;
 
-import com.curious.drifiting_bottle.repository.AuthenticationRepo;
+import com.curious.drifiting_bottle.dto.LoginDTO;
+import com.curious.drifiting_bottle.model.Registration;
+import com.curious.drifiting_bottle.model.TokenPair;
 import com.curious.drifiting_bottle.service.AuthenticationService;
+import com.curious.drifiting_bottle.service.RegistrationService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import com.curious.drifiting_bottle.model.User;
-
-import java.util.List;
 
 @RestController
-@RequestMapping("/api/login")
+@RequiredArgsConstructor
+@RequestMapping("/api/auth")
 public class AuthenticationController {
 
     private final AuthenticationService authenticationService;
+    private final RegistrationService registrationService;
 
-    public AuthenticationController(AuthenticationService authenticationService) {
-        this.authenticationService = authenticationService;
+    @PostMapping("/registration")
+    public ResponseEntity<Registration> registerUser(@Valid @RequestBody Registration user){
+        Registration newUser = registrationService.registerUser(user);
+        return new ResponseEntity<>(newUser, HttpStatus.CREATED);
     }
 
-    @PostMapping("Mock-insertion")
-    public ResponseEntity<List<User>>  insertingMockValues(@RequestBody List<User> users){
-        List<User> allusers = authenticationService.insertUsers(users);
-        return new ResponseEntity<>(allusers, HttpStatus.CREATED);
-    }
-
-    @DeleteMapping("/Mock-deletion")
-    public ResponseEntity<Void> deleteMockValues() {
-        authenticationService.deleteAllUsers();
-        return ResponseEntity.noContent().build();
-    }
-
-    @PostMapping("/authenticate")
-    public ResponseEntity<User> authenticateUser(@RequestBody User user) {
-
-        User authenticatedUser = authenticationService.authenticateUser(user);
-
-        if (authenticatedUser != null) {
-            return ResponseEntity.ok(authenticatedUser);
-        }
-
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@Valid @RequestBody LoginDTO user){
+        TokenPair tokenPair = authenticationService.login(user);
+        return ResponseEntity.ok(tokenPair);
     }
 }
