@@ -2,6 +2,7 @@ package com.curious.drifiting_bottle.service;
 
 import com.curious.drifiting_bottle.model.Registration;
 import com.curious.drifiting_bottle.model.Role;
+import com.curious.drifiting_bottle.model.Status;
 import com.curious.drifiting_bottle.repository.AuthenticationRepo;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +29,7 @@ public class RegistrationService {
                     .password(passwordEncoder.encode(user.getPassword()))
                     .confirmPassword(user.getConfirmPassword())
                     .role(Role.ROLE_USER)
+                    .status(Status.ONLINE)
                     .build();
 
             return authenticationRepo.save(newUser);

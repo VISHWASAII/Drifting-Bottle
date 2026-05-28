@@ -39,4 +39,7 @@ public class Registration {
     @Enumerated(EnumType.STRING)
     private Role role;
 
+    @Enumerated(EnumType.STRING)
+    private Status status;
+
 }
