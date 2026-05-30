@@ -69,11 +69,7 @@ public class AuthenticationService implements UserDetailsService {
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         Registration user = authenticationRepo.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-        return new org.springframework.security.core.userdetails.User(
-                user.getUsername(),
-                user.getPassword(),
-                getAuthority(user)
-        );
+        return user;
     }
 
     private Collection<? extends GrantedAuthority> getAuthority(Registration user) {

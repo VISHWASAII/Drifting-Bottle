@@ -1,5 +1,6 @@
 package com.curious.drifiting_bottle.service;
 
+import com.curious.drifiting_bottle.model.Registration;
 import com.curious.drifiting_bottle.model.TokenPair;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -64,8 +65,8 @@ public class JwtService {
             Map<String, Object> claims
     ) {
 
-        UserDetails userPrincipal =
-                (UserDetails) authentication.getPrincipal();
+        Registration userPrincipal =
+                (Registration) authentication.getPrincipal();
 
         Date now = new Date();
 
@@ -74,6 +75,11 @@ public class JwtService {
 
         var builder = Jwts.builder()
                 .setSubject(userPrincipal.getUsername())
+                .claim("id", userPrincipal.getId())
+                .claim("username", userPrincipal.getUsername())
+                .claim("email", userPrincipal.getEmail())
+                .claim("role", userPrincipal.getRole().name())
+                .claim("status", userPrincipal.getStatus().name())
                 .setIssuedAt(now)
                 .setExpiration(expiryDate);
 
